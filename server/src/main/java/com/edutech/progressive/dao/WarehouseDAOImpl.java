@@ -13,104 +13,79 @@ import com.edutech.progressive.entity.Warehouse;
 
 public class WarehouseDAOImpl implements WarehouseDAO{
 
-  private Connection con;
-  
-    public WarehouseDAOImpl() {
-   try {
-    this.con = DatabaseConnectionManager.getConnection();
-   } catch (Exception e) {
-    // TODO: handle exception
-    e.printStackTrace();;
-   } 
-}
+   public WarehouseDAOImpl() {}
 
-    @Override
     public int addWarehouse(Warehouse warehouse) throws SQLException {
-     String sql = "INSERT INTO warehouse (supplier_id, warehouse_name, location, capacity) VALUES (?,?,?,?)";
-     
-       
-            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-                    ps.setInt(1, warehouse.getSupplierId());
-                    ps.setString(2, warehouse.getWarehouseName());
-                    ps.setString(3, warehouse.getLocation());
-                    ps.setInt(4, warehouse.getCapacity());
-                    ps.executeUpdate();
-                        ResultSet rs =ps.getGeneratedKeys();
-                            int generatedId=-1;
-                        if(rs.next()){
-                            generatedId = rs.getInt(1);
-                            warehouse.setWarehouseId(generatedId);
-                        }
-    
-    return generatedId;
-}
+        Connection con = DatabaseConnectionManager.getConnection();
+        PreparedStatement ps = con.prepareStatement(
+                "INSERT INTO warehouse (supplier_id, warehouse_name, location, capacity) VALUES (?,?,?,?)",
+                Statement.RETURN_GENERATED_KEYS);
 
-    @Override
-    public Warehouse getWarehouseById(int warehouseId) throws SQLException {
-    String sql = "SELECT * FROM warehouse WHERE warehouse_id=?";
-        Warehouse warehouse=null;
-     
-            PreparedStatement ps = con.prepareStatement(sql);
-                ps.setInt(1, warehouseId);
-                ResultSet rs = ps.executeQuery();
+        ps.setInt(1, warehouse.getSupplierId());
+        ps.setString(2, warehouse.getWarehouseName());
+        ps.setString(3, warehouse.getLocation());
+        ps.setInt(4, warehouse.getCapacity());
+        ps.executeUpdate();
 
-                if(rs.next()){
-                    warehouse = new Warehouse(
-                    warehouseId,
-                   rs.getInt("supplier_id"),
-                  rs.getString("warehouse_name"),
-                 rs.getString("location"),
-                rs.getInt("capacity"));
-                }
-            
-        return warehouse;    
-    }
-
-    @Override
-    public void updateWarehouse(Warehouse warehouse) throws SQLException {
-          String sql ="UPDATE warehouse SET supplier_id= ?, warehouse_name=?, location=?, capacity=? WHERE warehouse_id=?";
-
-
-        PreparedStatement ps = con.prepareStatement(sql);
-               ps.setInt(1, warehouse.getSupplierId());
-               ps.setString(2, warehouse.getWarehouseName());
-               ps.setString(3, warehouse.getLocation());
-               ps.setInt(4, warehouse.getCapacity());
-               ps.setInt(5, warehouse.getWarehouseId());
-                ps.executeUpdate();
-        
-    }
-
-    @Override
-    public void deleteWarehouse(int warehouseId) throws SQLException {
-            String sql = "DELETE FROM warehouse WHERE warehouse_id=?";
-
-      
-        PreparedStatement ps = con.prepareStatement(sql);
-            ps.setInt(1, warehouseId);
-            ps.executeUpdate();
-        
-    }
-
-    @Override
-    public List<Warehouse> getAllWarehouse() throws SQLException {
-        String sql = "SELECT * FROM warehouse";
-        List<Warehouse> warehouses = new ArrayList<>();
-       
-        PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Warehouse warehouse = new Warehouse();
-                warehouse.setWarehouseId(rs.getInt("warehouse_id"));
-                warehouse.setSupplierId(rs.getInt("supplier_id"));
-                        warehouse.setWarehouseName(rs.getString("warehouse_name"));
-                       warehouse.setLocation(rs.getString("location"));
-                        warehouse.setCapacity(rs.getInt("capacity"));
-                    
-                        warehouses.add(warehouse);
-            
+        ResultSet rs = ps.getGeneratedKeys();
+        if (rs.next()) {
+            warehouse.setWarehouseId(rs.getInt(1));
+            return warehouse.getWarehouseId();
         }
-        return warehouses;
+        return -1;
     }
 
+    public Warehouse getWarehouseById(int warehouseId) throws SQLException {
+        Connection con = DatabaseConnectionManager.getConnection();
+        PreparedStatement ps = con.prepareStatement("SELECT * FROM warehouse WHERE warehouse_id=?");
+        ps.setInt(1, warehouseId);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            Warehouse w = new Warehouse();
+            w.setWarehouseId(rs.getInt("warehouse_id"));
+            w.setSupplierId(rs.getInt("supplier_id"));
+            w.setWarehouseName(rs.getString("warehouse_name"));
+            w.setLocation(rs.getString("location"));
+            w.setCapacity(rs.getInt("capacity"));
+            return w;
+        }
+        return null;
+    }
+
+    public void updateWarehouse(Warehouse warehouse) throws SQLException {
+        Connection con = DatabaseConnectionManager.getConnection();
+        PreparedStatement ps = con.prepareStatement(
+                "UPDATE warehouse SET capacity=? WHERE warehouse_id=?");
+
+        ps.setInt(1, warehouse.getCapacity());
+        ps.setInt(2, warehouse.getWarehouseId());
+        ps.executeUpdate();
+    }
+
+    public void deleteWarehouse(int warehouseId) throws SQLException {
+        Connection con = DatabaseConnectionManager.getConnection();
+        PreparedStatement ps = con.prepareStatement("DELETE FROM warehouse WHERE warehouse_id=?");
+        ps.setInt(1, warehouseId);
+        ps.executeUpdate();
+    }
+
+    public List<Warehouse> getAllWarehouse() throws SQLException {
+        List<Warehouse> list = new ArrayList<>();
+        Connection con = DatabaseConnectionManager.getConnection();
+        PreparedStatement ps = con.prepareStatement("SELECT * FROM warehouse");
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            Warehouse w = new Warehouse();
+            w.setWarehouseId(rs.getInt("warehouse_id"));
+            w.setSupplierId(rs.getInt("supplier_id"));
+            w.setWarehouseName(rs.getString("warehouse_name"));
+            w.setLocation(rs.getString("location"));
+            w.setCapacity(rs.getInt("capacity"));
+            list.add(w);
+        }
+        return list;
+    }
 
 }
